@@ -1,0 +1,631 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "final-project-adf007"
+		},
+		"dataflow_sink_dataset_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'dataflow_sink_dataset'"
+		},
+		"onprem_adls_source_final_linkedservice_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'onprem_adls_source_final_linkedservice'"
+		},
+		"onprem_sqlserver_source_linkedservice_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'onprem_sqlserver_source_linkedservice'"
+		},
+		"sink_adls_bronze_linkedservice_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'sink_adls_bronze_linkedservice'"
+		},
+		"sink_dataflow_linkeservice_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'sink_dataflow_linkeservice'"
+		},
+		"source_dataflow_linkedservice_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'source_dataflow_linkedservice'"
+		},
+		"dataflow_sink_dataset_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://sepstoragegenz.dfs.core.windows.net/"
+		},
+		"onprem_adls_source_final_linkedservice_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://sepstoragegenz.dfs.core.windows.net/"
+		},
+		"onprem_sqlserver_source_linkedservice_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "DESKTOP-UHTBC01"
+		},
+		"onprem_sqlserver_source_linkedservice_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "customer"
+		},
+		"onprem_sqlserver_source_linkedservice_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "newsqlserver"
+		},
+		"sink_adls_bronze_linkedservice_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://sepstoragegenz.dfs.core.windows.net/"
+		},
+		"sink_dataflow_linkeservice_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://sepstoragegenz.dfs.core.windows.net/"
+		},
+		"source_dataflow_linkedservice_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://sepstoragegenz.dfs.core.windows.net/"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/final_pipeline')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data1",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "SqlServerSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "DelimitedTextSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "DelimitedTextWriteSettings",
+									"quoteAllText": true,
+									"fileExtension": ".txt"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "onprem_sqlserver_dataset",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "sink_adls_bronze_dataset",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2025-09-28T08:45:39Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/onprem_sqlserver_dataset')]",
+				"[concat(variables('factoryId'), '/datasets/sink_adls_bronze_dataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow_sink_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "dataflow_sink_dataset",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "bronze/output",
+						"fileSystem": "final-project-folder"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/dataflow_sink_dataset')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow_source_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "source_dataflow_linkedservice",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "dbo.Transcations.txt",
+						"folderPath": "bronze/input",
+						"fileSystem": "final-project-folder"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "TransactionID",
+						"type": "String"
+					},
+					{
+						"name": "AccountID",
+						"type": "String"
+					},
+					{
+						"name": "TransactionAmount",
+						"type": "String"
+					},
+					{
+						"name": "TransactionDate",
+						"type": "String"
+					},
+					{
+						"name": "TransactionType",
+						"type": "String"
+					},
+					{
+						"name": "Location",
+						"type": "String"
+					},
+					{
+						"name": "DeviceID",
+						"type": "String"
+					},
+					{
+						"name": "IP_Address",
+						"type": "String"
+					},
+					{
+						"name": "MerchantID",
+						"type": "String"
+					},
+					{
+						"name": "Channel",
+						"type": "String"
+					},
+					{
+						"name": "CustomerAge",
+						"type": "String"
+					},
+					{
+						"name": "CustomerOccupation",
+						"type": "String"
+					},
+					{
+						"name": "TransactionDuration",
+						"type": "String"
+					},
+					{
+						"name": "LoginAttempts",
+						"type": "String"
+					},
+					{
+						"name": "AccountBalance",
+						"type": "String"
+					},
+					{
+						"name": "PreviousTransactionDate",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/source_dataflow_linkedservice')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/onprem_adls_source_final_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "onprem_adls_source_final_linkedservice",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/onprem_adls_source_final_linkedservice')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/onprem_sqlserver_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "onprem_sqlserver_source_linkedservice",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "SqlServerTable",
+				"schema": [
+					{
+						"name": "TransactionID",
+						"type": "nvarchar"
+					},
+					{
+						"name": "AccountID",
+						"type": "nvarchar"
+					},
+					{
+						"name": "TransactionAmount",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "TransactionDate",
+						"type": "datetime2",
+						"scale": 7
+					},
+					{
+						"name": "TransactionType",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Location",
+						"type": "nvarchar"
+					},
+					{
+						"name": "DeviceID",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "IP_Address",
+						"type": "nvarchar"
+					},
+					{
+						"name": "MerchantID",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Channel",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CustomerAge",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "CustomerOccupation",
+						"type": "nvarchar"
+					},
+					{
+						"name": "TransactionDuration",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "LoginAttempts",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "AccountBalance",
+						"type": "float",
+						"precision": 15
+					},
+					{
+						"name": "PreviousTransactionDate",
+						"type": "datetime2",
+						"scale": 7
+					}
+				],
+				"typeProperties": {
+					"schema": "dbo",
+					"table": "Transcations"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/onprem_sqlserver_source_linkedservice')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_adls_bronze_dataset')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sink_adls_bronze_linkedservice",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": "bronze",
+						"fileSystem": "final-project-folder"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/sink_adls_bronze_linkedservice')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/dataflow_sink_dataset')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('dataflow_sink_dataset_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('dataflow_sink_dataset_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/onprem_adls_source_final_linkedservice')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('onprem_adls_source_final_linkedservice_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('onprem_adls_source_final_linkedservice_accountKey')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "selfhostedintegrationRuntime1",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/selfhostedintegrationRuntime1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/onprem_sqlserver_source_linkedservice')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "SqlServer",
+				"typeProperties": {
+					"server": "[parameters('onprem_sqlserver_source_linkedservice_properties_typeProperties_server')]",
+					"database": "[parameters('onprem_sqlserver_source_linkedservice_properties_typeProperties_database')]",
+					"encrypt": "optional",
+					"trustServerCertificate": true,
+					"authenticationType": "SQL",
+					"userName": "[parameters('onprem_sqlserver_source_linkedservice_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('onprem_sqlserver_source_linkedservice_password')]"
+					}
+				},
+				"connectVia": {
+					"referenceName": "selfhostedintegrationRuntime1",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/integrationRuntimes/selfhostedintegrationRuntime1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_adls_bronze_linkedservice')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('sink_adls_bronze_linkedservice_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('sink_adls_bronze_linkedservice_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/sink_dataflow_linkeservice')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('sink_dataflow_linkeservice_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('sink_dataflow_linkeservice_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/source_dataflow_linkedservice')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('source_dataflow_linkedservice_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('source_dataflow_linkedservice_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/selfhostedintegrationRuntime1')]",
+			"type": "Microsoft.DataFactory/factories/integrationRuntimes",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "SelfHosted",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/Final_dataflow')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "dataflow_source_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "source1"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "dataflow_sink_dataset",
+								"type": "DatasetReference"
+							},
+							"name": "sink1"
+						}
+					],
+					"transformations": [
+						{
+							"name": "aggregate1"
+						}
+					],
+					"scriptLines": [
+						"parameters{",
+						"     parameter1 as string",
+						"}",
+						"source(output(",
+						"          TransactionID as string,",
+						"          AccountID as string,",
+						"          TransactionAmount as string,",
+						"          TransactionDate as string,",
+						"          TransactionType as string,",
+						"          Location as string,",
+						"          DeviceID as string,",
+						"          IP_Address as string,",
+						"          MerchantID as string,",
+						"          Channel as string,",
+						"          CustomerAge as string,",
+						"          CustomerOccupation as string,",
+						"          TransactionDuration as string,",
+						"          LoginAttempts as string,",
+						"          AccountBalance as string,",
+						"          PreviousTransactionDate as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> source1",
+						"source1 aggregate(groupBy(TransactionID,",
+						"          AccountID,",
+						"          TransactionAmount,",
+						"          TransactionDate,",
+						"          TransactionType,",
+						"          Location,",
+						"          DeviceID,",
+						"          IP_Address,",
+						"          MerchantID,",
+						"          Channel,",
+						"          CustomerAge,",
+						"          CustomerOccupation,",
+						"          TransactionDuration,",
+						"          LoginAttempts,",
+						"          AccountBalance,",
+						"          PreviousTransactionDate),",
+						"     DuplicateCount = count(1)) ~> aggregate1",
+						"aggregate1 sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     umask: 0022,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> sink1"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/dataflow_source_dataset')]",
+				"[concat(variables('factoryId'), '/datasets/dataflow_sink_dataset')]"
+			]
+		}
+	]
+}
