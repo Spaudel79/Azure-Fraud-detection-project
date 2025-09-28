@@ -1,0 +1,91 @@
+{
+	"name": "onprem_sqlserver_dataset",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "onprem_sqlserver_source_linkedservice",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "SqlServerTable",
+		"schema": [
+			{
+				"name": "TransactionID",
+				"type": "nvarchar"
+			},
+			{
+				"name": "AccountID",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TransactionAmount",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "TransactionDate",
+				"type": "datetime2",
+				"scale": 7
+			},
+			{
+				"name": "TransactionType",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Location",
+				"type": "nvarchar"
+			},
+			{
+				"name": "DeviceID",
+				"type": "money",
+				"precision": 19,
+				"scale": 4
+			},
+			{
+				"name": "IP_Address",
+				"type": "nvarchar"
+			},
+			{
+				"name": "MerchantID",
+				"type": "nvarchar"
+			},
+			{
+				"name": "Channel",
+				"type": "nvarchar"
+			},
+			{
+				"name": "CustomerAge",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "CustomerOccupation",
+				"type": "nvarchar"
+			},
+			{
+				"name": "TransactionDuration",
+				"type": "smallint",
+				"precision": 5
+			},
+			{
+				"name": "LoginAttempts",
+				"type": "tinyint",
+				"precision": 3
+			},
+			{
+				"name": "AccountBalance",
+				"type": "float",
+				"precision": 15
+			},
+			{
+				"name": "PreviousTransactionDate",
+				"type": "datetime2",
+				"scale": 7
+			}
+		],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "Transcations"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

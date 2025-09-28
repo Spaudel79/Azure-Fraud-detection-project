@@ -1,0 +1,9 @@
+{
+	"name": "final-project-adf007",
+	"location": "southeastasia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "c5550777-109e-47b6-a827-092db183e438",
+		"tenantId": "349a5a74-66ed-4bcf-b64f-ebb79266e455"
+	}
+}
