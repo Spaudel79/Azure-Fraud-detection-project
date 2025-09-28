@@ -1,0 +1,65 @@
+{
+	"name": "Final_dataflow",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "dataflow_source_dataset",
+						"type": "DatasetReference"
+					},
+					"name": "source1"
+				}
+			],
+			"sinks": [],
+			"transformations": [
+				{
+					"name": "aggregate1"
+				}
+			],
+			"scriptLines": [
+				"parameters{",
+				"     parameter1 as string",
+				"}",
+				"source(output(",
+				"          TransactionID as string,",
+				"          AccountID as string,",
+				"          TransactionAmount as string,",
+				"          TransactionDate as string,",
+				"          TransactionType as string,",
+				"          Location as string,",
+				"          DeviceID as string,",
+				"          IP_Address as string,",
+				"          MerchantID as string,",
+				"          Channel as string,",
+				"          CustomerAge as string,",
+				"          CustomerOccupation as string,",
+				"          TransactionDuration as string,",
+				"          LoginAttempts as string,",
+				"          AccountBalance as string,",
+				"          PreviousTransactionDate as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> source1",
+				"source1 aggregate(groupBy(TransactionID,",
+				"          AccountID,",
+				"          TransactionAmount,",
+				"          TransactionDate,",
+				"          TransactionType,",
+				"          Location,",
+				"          DeviceID,",
+				"          IP_Address,",
+				"          MerchantID,",
+				"          Channel,",
+				"          CustomerAge,",
+				"          CustomerOccupation,",
+				"          TransactionDuration,",
+				"          LoginAttempts,",
+				"          AccountBalance,",
+				"          PreviousTransactionDate)) ~> aggregate1"
+			]
+		}
+	}
+}
